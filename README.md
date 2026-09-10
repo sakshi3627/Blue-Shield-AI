@@ -115,6 +115,7 @@ Ecosystem Data → Ecosystem Vulnerability
 Intervention Priority Score
       ↓
 Human Verification
+```
 
 ## 👥 Team
 
