@@ -1,953 +1,337 @@
 import streamlit as st
-import requests
-import plotly.graph_objects as go
 
+# Set page layout and title
+st.set_page_config(page_title="Abyssal Blue Shield AI", layout="centered")
 
-# ============================================================
-# PAGE CONFIGURATION
-# ============================================================
-
-st.set_page_config(
-    page_title="Blue Shield AI",
-    page_icon="🌊",
-    layout="wide"
-)
-
-
-# ============================================================
-# PAGE STYLE
-# ============================================================
-
+# Inject HTML and CSS into Streamlit
 st.markdown("""
 <style>
+    /* Dark background override for Streamlit app container */
+    .stApp {
+        background-color: #010410; /* Extra dark abyss black */
+    }
 
-.stApp {
-    background-color: #f5f8fb;
-}
+    :root {
+        /* Revised Ocean & Deep Teal Palette */
+        --abyss-black: #010410;
+        --primary-ocean: #00d2ff;
+        --deep-ocean: #004785;
+        --teal-glow: rgba(0, 210, 255, 0.6);
+        --glass-bg: rgba(6, 26, 48, 0.7);
+        --glass-border: rgba(0, 210, 255, 0.25);
+        --text-subtle: #809bb0;
+    }
 
-h1, h2, h3 {
-    color: #063970;
-}
+    /* Full Ocean-Themed Background environment */
+    .ocean-abyss {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 60px 0;
+        overflow: hidden; /* Contains bubbles and networks */
+        border-radius: 30px;
+    }
 
-div[data-testid="stMetric"] {
-    background-color: white;
-    border: 1px solid #dce5ed;
-    padding: 15px;
-    border-radius: 12px;
-}
+    /* Ambient Bioluminescent Glow */
+    .ocean-abyss::before {
+        content: '';
+        position: absolute;
+        width: 450px;
+        height: 450px;
+        background: radial-gradient(circle, var(--deep-ocean) 0%, transparent 80%);
+        opacity: 0.6;
+        filter: blur(100px);
+        z-index: 0;
+    }
 
-div[data-testid="stMetricValue"] {
-    color: #063970;
-}
+    /* Animated Digital Abyssal Network */
+    .ocean-abyss::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: 
+            radial-gradient(var(--teal-glow) 1px, transparent 1px),
+            linear-gradient(rgba(0, 210, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px, 100px 100px;
+        background-position: center;
+        opacity: 0.2;
+        filter: blur(1px);
+        z-index: -1;
+        animation: digital-drift 20s linear infinite;
+    }
 
-.stButton > button {
-    width: 100%;
-    background-color: #063970;
-    color: white;
-    font-weight: bold;
-    border-radius: 8px;
-}
+    /* Rising Bubble Graphics */
+    .bubble {
+        position: absolute;
+        background: rgba(0, 210, 255, 0.3);
+        border: 1px solid rgba(0, 210, 255, 0.5);
+        border-radius: 50%;
+        animation: bubble-rise 8s infinite ease-in;
+        z-index: -2; /* Behind the drift and glow */
+    }
 
+    /* Advanced Shield Container Card with Shimmer */
+    .shield-card {
+        position: relative;
+        z-index: 10;
+        width: 360px;
+        padding: 50px 35px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 28px;
+        border: 1px solid var(--glass-border);
+        box-shadow: 
+            0 25px 60px rgba(0, 0, 0, 0.8),
+            inset 0 2px 10px rgba(0, 210, 255, 0.1),
+            0 0 15px rgba(0, 210, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin: 0 auto;
+        overflow: hidden; /* For shimmer */
+    }
+
+    /* Continuous Hydro-static Shimmer Effect */
+    .shield-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            135deg,
+            transparent 0%,
+            transparent 45%,
+            rgba(255, 255, 255, 0.08) 50%,
+            transparent 55%,
+            transparent 100%
+        );
+        background-size: 200% 200%;
+        animation: shimmer 6s infinite;
+        z-index: 11; /* Above title and description */
+    }
+
+    /* Advanced Oceanic SVG Grid Overlay (subtle) */
+    .svg-grid-overlay {
+        position: absolute;
+        inset: -20%;
+        opacity: 0.08;
+        z-index: -1;
+        transform: rotate(-10deg);
+    }
+
+    /* Outer Energy Ring - Bioluminescent Pulse */
+    .shield-wrapper {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 28px;
+        z-index: 5;
+    }
+
+    .shield-wrapper::before,
+    .shield-wrapper::after {
+        content: '';
+        position: absolute;
+        inset: -12px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-ocean);
+        opacity: 0;
+        animation: bioluminescent-pulse 3.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        filter: blur(1px);
+    }
+
+    .shield-wrapper::after {
+        animation-delay: 1.75s;
+    }
+
+    /* Glowing Shield Box - Abyssal Depth */
+    .shield-icon {
+        position: relative;
+        width: 125px;
+        height: 125px;
+        background: radial-gradient(circle at 50% 30%, rgba(0, 71, 133, 0.5), var(--abyss-black) 80%);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 
+            0 0 40px var(--teal-glow),
+            inset 0 0 20px rgba(0, 210, 255, 0.3),
+            0 0 100px rgba(0, 71, 133, 0.4);
+        border: 1px solid rgba(0, 210, 255, 0.5);
+        overflow: hidden;
+    }
+
+    .shield-svg {
+        width: 65px;
+        height: 65px;
+        fill: none;
+        stroke: var(--primary-ocean);
+        stroke-width: 1.5;
+        filter: drop-shadow(0 0 10px var(--primary-ocean));
+        z-index: 2;
+    }
+
+    /* Sonic Echo Beam Effect (Modified scan) */
+    .scanner-line {
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #ffffff, transparent);
+        box-shadow: 0 0 20px var(--primary-ocean), 0 0 10px #ffffff;
+        top: 0;
+        z-index: 3;
+        animation: sonic-echo 3s ease-in-out infinite alternate;
+        opacity: 0.8;
+    }
+
+    /* Advanced AI Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0, 210, 255, 0.08);
+        border: 1px solid var(--primary-ocean);
+        color: var(--primary-ocean);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        padding: 8px 18px;
+        border-radius: 25px;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+        z-index: 5;
+    }
+
+    .status-dot {
+        width: 7px;
+        height: 7px;
+        background-color: var(--primary-ocean);
+        border-radius: 50%;
+        box-shadow: 0 0 12px var(--primary-ocean), 0 0 6px #ffffff;
+        animation: abyssal-blink 1.2s infinite alternate;
+    }
+
+    .title {
+        color: #ffffff;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
+        z-index: 5;
+    }
+
+    .description {
+        color: var(--text-subtle);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        font-weight: 400;
+        max-width: 90%;
+        z-index: 5;
+    }
+
+    /* --- Detailed Animations --- */
+
+    /* Digital network drifting deep underwater */
+    @keyframes digital-drift {
+        0% { background-position: center; transform: translateY(0); }
+        100% { background-position: center 200px; transform: translateY(-50px); }
+    }
+
+    /* Rising bubble effect with opacity change */
+    @keyframes bubble-rise {
+        0% { transform: translateY(100vh) scale(1); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateY(-20vh) scale(1.5); opacity: 0; }
+    }
+
+    /* Continuous Hydro-static Shimmer across the card */
+    @keyframes shimmer {
+        0% { background-position: -200% -200%; }
+        100% { background-position: 200% 200%; }
+    }
+
+    /* Sonic Echo Beam/Scan animation */
+    @keyframes sonic-echo {
+        0% { top: 0%; opacity: 0.3; }
+        50% { opacity: 1; }
+        100% { top: 100%; opacity: 0.3; }
+    }
+
+    /* Bioluminescent pulse effect for energy rings */
+    @keyframes bioluminescent-pulse {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.9;
+            box-shadow: 0 0 10px var(--teal-glow);
+        }
+        80%, 100% {
+            transform: scale(1.4);
+            opacity: 0;
+            box-shadow: 0 0 30px transparent;
+        }
+    }
+
+    /* Slower, deep blink for the status indicator */
+    @keyframes abyssal-blink {
+        0% { opacity: 0.2; transform: scale(0.9); }
+        100% { opacity: 1; transform: scale(1.1); }
+    }
 </style>
+
+<div class="ocean-abyss">
+    <!-- Bubble graphics - different sizes/speeds -->
+    <div class="bubble" style="width: 15px; height: 15px; left: 10%; animation-delay: 0s; animation-duration: 9s;"></div>
+    <div class="bubble" style="width: 8px; height: 8px; left: 25%; animation-delay: 2s; animation-duration: 7s;"></div>
+    <div class="bubble" style="width: 20px; height: 20px; left: 40%; animation-delay: 1s; animation-duration: 10s;"></div>
+    <div class="bubble" style="width: 12px; height: 12px; left: 60%; animation-delay: 3s; animation-duration: 8s;"></div>
+    <div class="bubble" style="width: 18px; height: 18px; left: 85%; animation-delay: 0.5s; animation-duration: 9s;"></div>
+
+    <div class="shield-card">
+        <!-- Subtle Oceanic Topographic Grid Overlay SVG -->
+        <svg class="svg-grid-overlay" width="100%" height="100%" viewBox="0 0 100 100">
+            <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#grid)" />
+            <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="0.2" fill="none"/>
+            <path d="M 20 20 Q 50 80 80 20" stroke="currentColor" stroke-width="0.2" fill="none"/>
+        </svg>
+
+        <div class="shield-wrapper">
+            <div class="shield-icon">
+                <div class="scanner-line"></div>
+                <!-- Shield SVG Icon with slight bioluminescent shift -->
+                <svg class="shield-svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <path d="M9 12l2 2 4-4" stroke="#ffffff" stroke-width="2.5"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div class="status-badge">
+            <span class="status-dot"></span> Abyssal Protocol Active
+        </div>
+
+        <h2 class="title">Oceanic Blue Shield AI</h2>
+        <p class="description">Neural threat detection and deep-sea system defense protocols operational.</p>
+    </div>
+</div>
 """, unsafe_allow_html=True)
-
-
-# ============================================================
-# HEADER
-# ============================================================
-
-st.title("🌊 Blue Shield AI")
-
-st.subheader(
-    "AI-Powered Maritime Risk & Marine Ecosystem Protection System"
-)
-
-st.write(
-    "**Detect → Analyse → Assess → Prioritize → Verify**"
-)
-
-st.divider()
-
-
-# ============================================================
-# SIDEBAR INPUTS
-# ============================================================
-
-with st.sidebar:
-
-    st.header("⚓ Vessel Telemetry")
-
-    vessel_id = st.text_input(
-        "Vessel ID",
-        value="V001"
-    )
-
-    st.subheader("📍 Vessel Location")
-
-    lat = st.number_input(
-        "Latitude",
-        value=-3.1500,
-        format="%.4f"
-    )
-
-    lon = st.number_input(
-        "Longitude",
-        value=130.2000,
-        format="%.4f"
-    )
-
-    st.subheader("🚢 Vessel Behaviour")
-
-    speed_knots = st.number_input(
-        "Speed (knots)",
-        min_value=0.0,
-        value=4.2,
-        step=0.1
-    )
-
-    ais_gap_hours = st.number_input(
-        "AIS Gap (hours)",
-        min_value=0.0,
-        value=12.5,
-        step=0.5
-    )
-
-    spoofed_identity = st.selectbox(
-        "Identity Anomaly Detected?",
-        options=[0, 1],
-        format_func=lambda x: "Yes" if x == 1 else "No",
-        index=1
-    )
-
-    proximity_meters = st.number_input(
-        "Proximity to MPA (meters)",
-        min_value=0.0,
-        value=150.0,
-        step=50.0
-    )
-
-    st.subheader("🌊 Ecosystem Information")
-
-    in_mpa_zone = st.selectbox(
-        "Inside Marine Protected Area?",
-        options=[0, 1],
-        format_func=lambda x: "Yes" if x == 1 else "No",
-        index=1
-    )
-
-    coral_reef_proximity = st.number_input(
-        "Coral Reef Proximity (meters)",
-        min_value=0.0,
-        value=80.0,
-        step=10.0
-    )
-
-    benthic_sensitivity = st.number_input(
-        "Benthic Sensitivity (0–10)",
-        min_value=0.0,
-        max_value=10.0,
-        value=8.5,
-        step=0.1
-    )
-
-    fishing_duration_hours = st.number_input(
-        "Fishing Duration (hours)",
-        min_value=0.0,
-        value=6.0,
-        step=0.5
-    )
-
-    st.divider()
-
-    analyze_button = st.button(
-        "🔍 ANALYZE VESSEL RISK"
-    )
-
-
-# ============================================================
-# MAP
-# ============================================================
-
-st.header("🗺️ Marine Monitoring Map")
-
-map_data = [
-    {
-        "lat": lat,
-        "lon": lon
-    }
-]
-
-st.map(
-    map_data,
-    zoom=6
-)
-
-st.caption(
-    "📍 Vessel location based on entered telemetry. "
-    "AIS, satellite and marine GIS observations can be "
-    "integrated into this monitoring layer."
-)
-
-
-# ============================================================
-# RISK LEVEL FUNCTION
-# ============================================================
-
-def get_risk_level(score):
-
-    if score >= 70:
-        return "HIGH", "🔴"
-
-    elif score >= 40:
-        return "MEDIUM", "🟠"
-
-    else:
-        return "LOW", "🟢"
-
-
-# ============================================================
-# GAUGE CHART FUNCTION
-# ============================================================
-
-def create_gauge(score, title):
-
-    if score >= 70:
-        bar_color = "#d62728"
-
-    elif score >= 40:
-        bar_color = "#ff9800"
-
-    else:
-        bar_color = "#2e9d59"
-
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number",
-            value=score,
-            title={
-                "text": title
-            },
-            number={
-                "suffix": "/100"
-            },
-            gauge={
-                "axis": {
-                    "range": [0, 100]
-                },
-                "bar": {
-                    "color": bar_color
-                },
-                "steps": [
-                    {
-                        "range": [0, 40],
-                        "color": "#e8f5e9"
-                    },
-                    {
-                        "range": [40, 70],
-                        "color": "#fff3e0"
-                    },
-                    {
-                        "range": [70, 100],
-                        "color": "#ffebee"
-                    }
-                ]
-            }
-        )
-    )
-
-    fig.update_layout(
-        height=280,
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
-        ),
-        paper_bgcolor="white"
-    )
-
-    return fig
-
-
-# ============================================================
-# ANALYZE BUTTON
-# ============================================================
-
-if analyze_button:
-
-    # --------------------------------------------------------
-    # PAYLOAD
-    # --------------------------------------------------------
-
-    payload = {
-
-        "vessel_id": vessel_id,
-
-        "speed_knots": speed_knots,
-
-        "ais_gap_hours": ais_gap_hours,
-
-        "spoofed_identity": spoofed_identity,
-
-        "proximity_meters": proximity_meters,
-
-        "in_mpa_zone": in_mpa_zone,
-
-        "coral_reef_proximity": coral_reef_proximity,
-
-        "benthic_sensitivity": benthic_sensitivity,
-
-        "fishing_duration_hours": fishing_duration_hours
-    }
-
-
-    # --------------------------------------------------------
-    # CONNECT TO FASTAPI
-    # --------------------------------------------------------
-
-    try:
-
-        response = requests.post(
-            "http://localhost:8000/analyze-risk",
-            json=payload,
-            timeout=10
-        )
-
-
-        # ====================================================
-        # SUCCESS
-        # ====================================================
-
-        if response.status_code == 200:
-
-            result = response.json()
-
-
-            # ------------------------------------------------
-            # GET SCORES
-            # ------------------------------------------------
-
-            iuu_score = float(
-                result["iuu_risk_score"]
-            )
-
-            ecosystem_score = float(
-                result["ecosystem_vulnerability_score"]
-            )
-
-            intervention_score = float(
-                result["intervention_priority_score"]
-            )
-
-            priority = result["priority_level"]
-
-
-            # =================================================
-            # RISK SUMMARY
-            # =================================================
-
-            st.divider()
-
-            st.header("📊 Risk Assessment Summary")
-
-
-            col1, col2, col3, col4 = st.columns(4)
-
-
-            # IUU RISK
-            with col1:
-
-                level, icon = get_risk_level(
-                    iuu_score
-                )
-
-                st.metric(
-                    label="⚠️ IUU Risk",
-                    value=f"{iuu_score:.1f}/100",
-                    delta=f"{icon} {level}"
-                )
-
-
-            # ECOSYSTEM
-            with col2:
-
-                level, icon = get_risk_level(
-                    ecosystem_score
-                )
-
-                st.metric(
-                    label="🌊 Ecosystem Vulnerability",
-                    value=f"{ecosystem_score:.1f}/100",
-                    delta=f"{icon} {level}"
-                )
-
-
-            # INTERVENTION
-            with col3:
-
-                level, icon = get_risk_level(
-                    intervention_score
-                )
-
-                st.metric(
-                    label="🎯 Intervention Priority",
-                    value=f"{intervention_score:.1f}/100",
-                    delta=f"{icon} {level}"
-                )
-
-
-            # OVERALL STATUS
-            with col4:
-
-                if priority == "HIGH PRIORITY":
-
-                    st.metric(
-                        label="🚨 Overall Status",
-                        value="HIGH",
-                        delta="🔴 Human Verification"
-                    )
-
-                elif priority == "MEDIUM PRIORITY":
-
-                    st.metric(
-                        label="🚨 Overall Status",
-                        value="MEDIUM",
-                        delta="🟠 Investigation"
-                    )
-
-                else:
-
-                    st.metric(
-                        label="🚨 Overall Status",
-                        value="LOW",
-                        delta="🟢 Routine Monitoring"
-                    )
-
-
-            # =================================================
-            # AI RISK ANALYSIS
-            # =================================================
-
-            st.divider()
-
-            st.header("📈 AI Risk Analysis")
-
-
-            chart1, chart2, chart3 = st.columns(3)
-
-
-            with chart1:
-
-                st.plotly_chart(
-                    create_gauge(
-                        iuu_score,
-                        "IUU Risk"
-                    ),
-                    use_container_width=True
-                )
-
-
-            with chart2:
-
-                st.plotly_chart(
-                    create_gauge(
-                        ecosystem_score,
-                        "Ecosystem Vulnerability"
-                    ),
-                    use_container_width=True
-                )
-
-
-            with chart3:
-
-                st.plotly_chart(
-                    create_gauge(
-                        intervention_score,
-                        "Intervention Priority"
-                    ),
-                    use_container_width=True
-                )
-
-
-            # =================================================
-            # PRIORITY ALERT
-            # =================================================
-
-            st.header("🚨 Intervention Decision")
-
-
-            if priority == "HIGH PRIORITY":
-
-                st.error(
-                    "🔴 HIGH PRIORITY — "
-                    "Human Verification Required"
-                )
-
-            elif priority == "MEDIUM PRIORITY":
-
-                st.warning(
-                    "🟠 MEDIUM PRIORITY — "
-                    "Further Investigation Recommended"
-                )
-
-            else:
-
-                st.success(
-                    "🟢 LOW PRIORITY — "
-                    "Routine Monitoring"
-                )
-
-
-            # =================================================
-            # VESSEL INFORMATION
-            # =================================================
-
-            st.header("🚢 Vessel Detection & Status")
-
-
-            info1, info2, info3 = st.columns(3)
-
-
-            with info1:
-
-                st.write(
-                    f"**Vessel ID:** {result['vessel_id']}"
-                )
-
-                st.write(
-                    f"**AIS Status:** {result['ais_status']}"
-                )
-
-
-            with info2:
-
-                st.write(
-                    f"**Protected Area:** "
-                    f"{result['mpa_status']}"
-                )
-
-                st.write(
-                    f"**Speed:** "
-                    f"{speed_knots} knots"
-                )
-
-
-            with info3:
-
-                if result["action_required"]:
-
-                    st.write(
-                        "**Action Required:** "
-                        "🔴 Human Verification"
-                    )
-
-                else:
-
-                    st.write(
-                        "**Action Required:** "
-                        "🟢 Routine Monitoring"
-                    )
-
-                st.write(
-                    f"**Fishing Duration:** "
-                    f"{fishing_duration_hours} hours"
-                )
-
-
-            # =================================================
-            # RISK INDICATORS
-            # =================================================
-
-            st.header("🔍 Risk Indicators Detected")
-
-
-            indicators = []
-
-
-            if ais_gap_hours > 1:
-
-                indicators.append(
-                    "⚠️ Significant AIS gap detected"
-                )
-
-
-            if spoofed_identity == 1:
-
-                indicators.append(
-                    "⚠️ Vessel identity anomaly detected"
-                )
-
-
-            if in_mpa_zone == 1:
-
-                indicators.append(
-                    "🪸 Vessel is inside a Marine Protected Area"
-                )
-
-
-            if coral_reef_proximity < 500:
-
-                indicators.append(
-                    "🪸 Vessel is close to a coral reef"
-                )
-
-
-            if proximity_meters < 500:
-
-                indicators.append(
-                    "⚠️ Vessel is close to a protected "
-                    "or sensitive zone"
-                )
-
-
-            if fishing_duration_hours > 5:
-
-                indicators.append(
-                    "🎣 Extended fishing activity detected"
-                )
-
-
-            if benthic_sensitivity >= 7:
-
-                indicators.append(
-                    "🌊 High ecosystem sensitivity detected"
-                )
-
-
-            if len(indicators) == 0:
-
-                st.success(
-                    "🟢 No major risk indicators detected."
-                )
-
-            else:
-
-                for indicator in indicators:
-
-                    st.warning(
-                        indicator
-                    )
-
-
-            # =================================================
-            # EXPLAINABLE AI
-            # =================================================
-
-            st.header(
-                "🧠 Explainable AI — "
-                "Why Was This Vessel Prioritized?"
-            )
-
-
-            explanation_parts = []
-
-
-            if ais_gap_hours > 1:
-
-                explanation_parts.append(
-                    f"AIS reporting gap of "
-                    f"{ais_gap_hours:.1f} hours"
-                )
-
-
-            if spoofed_identity == 1:
-
-                explanation_parts.append(
-                    "identity anomaly"
-                )
-
-
-            if in_mpa_zone == 1:
-
-                explanation_parts.append(
-                    "presence inside a Marine Protected Area"
-                )
-
-
-            if coral_reef_proximity < 500:
-
-                explanation_parts.append(
-                    f"proximity to coral reef "
-                    f"({coral_reef_proximity:.0f} m)"
-                )
-
-
-            if proximity_meters < 500:
-
-                explanation_parts.append(
-                    f"proximity to protected area "
-                    f"({proximity_meters:.0f} m)"
-                )
-
-
-            if fishing_duration_hours > 5:
-
-                explanation_parts.append(
-                    f"extended fishing activity "
-                    f"({fishing_duration_hours:.1f} hours)"
-                )
-
-
-            if benthic_sensitivity >= 7:
-
-                explanation_parts.append(
-                    "high ecosystem sensitivity"
-                )
-
-
-            if explanation_parts:
-
-                st.info(
-                    "The system prioritized this vessel "
-                    "because the following risk signals "
-                    "were detected:\n\n"
-                    + "\n".join(
-                        [
-                            "• " + x
-                            for x in explanation_parts
-                        ]
-                    )
-                )
-
-                st.write(
-                    "These signals contribute to the "
-                    "IUU Risk Score and Ecosystem "
-                    "Vulnerability Score. These scores "
-                    "are then combined into the "
-                    "Intervention Priority Score."
-                )
-
-            else:
-
-                st.success(
-                    "No major risk indicators were triggered "
-                    "by the selected inputs."
-                )
-
-
-            # =================================================
-            # SCORE INTERPRETATION
-            # =================================================
-
-            st.header("📌 Risk Score Interpretation")
-
-
-            r1, r2, r3 = st.columns(3)
-
-
-            with r1:
-
-                st.write("**IUU Risk Score**")
-
-                st.write(
-                    "Measures the level of suspicious "
-                    "maritime behaviour using signals "
-                    "such as AIS gaps, identity anomalies "
-                    "and vessel behaviour."
-                )
-
-
-            with r2:
-
-                st.write(
-                    "**Ecosystem Vulnerability Score**"
-                )
-
-                st.write(
-                    "Represents the sensitivity of the "
-                    "marine environment around the vessel, "
-                    "including protected and sensitive areas."
-                )
-
-
-            with r3:
-
-                st.write(
-                    "**Intervention Priority Score**"
-                )
-
-                st.write(
-                    "Combines activity risk and ecosystem "
-                    "vulnerability to help prioritize "
-                    "incidents for investigation."
-                )
-
-
-            # =================================================
-            # DECISION FLOW
-            # =================================================
-
-            st.header(
-                "🔄 Blue Shield AI Decision Flow"
-            )
-
-
-            f1, f2, f3, f4, f5 = st.columns(5)
-
-
-            with f1:
-
-                st.info(
-                    "🛰️ **DATA INPUT**\n\n"
-                    "AIS\n"
-                    "Satellite\n"
-                    "Marine GIS"
-                )
-
-
-            with f2:
-
-                st.info(
-                    "🤖 **AI ANALYSIS**\n\n"
-                    "Behaviour\n"
-                    "Identity\n"
-                    "Anomalies"
-                )
-
-
-            with f3:
-
-                st.info(
-                    "⚠️ **RISK ASSESSMENT**\n\n"
-                    "IUU Risk\n"
-                    "Risk Signals"
-                )
-
-
-            with f4:
-
-                st.info(
-                    "🌊 **ECOLOGICAL ASSESSMENT**\n\n"
-                    "MPA\n"
-                    "Coral Reef\n"
-                    "Sensitivity"
-                )
-
-
-            with f5:
-
-                st.info(
-                    "🎯 **PRIORITIZE**\n\n"
-                    "Priority Score\n"
-                    "Human Verification"
-                )
-
-
-            # =================================================
-            # FINAL RECOMMENDATION
-            # =================================================
-
-            st.divider()
-
-            st.header(
-                "🛡️ Blue Shield AI Recommendation"
-            )
-
-
-            if intervention_score >= 70:
-
-                st.error(
-                    "🔴 **HIGH PRIORITY**\n\n"
-                    "Prioritize this incident for "
-                    "human verification and further investigation."
-                )
-
-            elif intervention_score >= 40:
-
-                st.warning(
-                    "🟠 **MEDIUM PRIORITY**\n\n"
-                    "Further investigation and monitoring "
-                    "are recommended."
-                )
-
-            else:
-
-                st.success(
-                    "🟢 **LOW PRIORITY**\n\n"
-                    "Continue routine monitoring."
-                )
-
-
-            # =================================================
-            # DISCLAIMER
-            # =================================================
-
-            st.info(
-                "🛡️ **Decision-Support Disclaimer:** "
-                "Blue Shield AI identifies potential "
-                "high-risk maritime activity using available "
-                "data signals. It does not declare a vessel "
-                "illegal or establish guilt. Final enforcement "
-                "decisions require human verification and "
-                "appropriate evidence."
-            )
-
-
-        # ====================================================
-        # API ERROR
-        # ====================================================
-
-        else:
-
-            st.error(
-                f"❌ API returned status code "
-                f"{response.status_code}"
-            )
-
-            st.code(
-                response.text
-            )
-
-
-    # ========================================================
-    # CONNECTION ERROR
-    # ========================================================
-
-    except requests.exceptions.ConnectionError:
-
-        st.error(
-            "❌ Could not connect to the FastAPI backend."
-        )
-
-        st.info(
-            "Make sure Terminal 1 is running FastAPI."
-        )
-
-        st.code(
-            "uvicorn app:app --reload --port 8000"
-        )
-
-
-    # ========================================================
-    # TIMEOUT ERROR
-    # ========================================================
-
-    except requests.exceptions.Timeout:
-
-        st.error(
-            "❌ FastAPI took too long to respond."
-        )
-
-
-    # ========================================================
-    # OTHER ERROR
-    # ========================================================
-
-    except Exception as e:
-
-        st.error(
-            f"❌ Unexpected error: {e}"
-        )
-
-
-# ============================================================
-# BEFORE ANALYSIS
-# ============================================================
-
-else:
-
-    st.info(
-        "👈 Enter the vessel telemetry in the sidebar "
-        "and click **ANALYZE VESSEL RISK** to generate "
-        "the Blue Shield AI risk assessment."
-    )
+                 
+        
+
+        
+          
+   
+  
