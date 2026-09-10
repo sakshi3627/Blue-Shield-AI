@@ -1,0 +1,12 @@
+streamlit
+requests
+plotly
+numpy
+pandas
+scikit-learn
+joblib
+fastapi
+uvicorn
+python-multipart
+opencv-python-headless
+ultralytics
