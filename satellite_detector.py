@@ -21,3 +21,4 @@ def run_satellite_vessel_detection(image_path):
 
 if __name__ == "__main__":
     print("Satellite detection module ready.")
+    
